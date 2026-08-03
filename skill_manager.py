@@ -14,9 +14,16 @@ import sys
 import venv
 from pathlib import Path
 
-from fastmcp import FastMCP
-
-mcp = FastMCP("Jarvis-Skill-Factory")
+# fastmcp is only required when running this module as a standalone MCP
+# server (python skill_manager.py) — NOT when main.py imports the
+# test_and_deploy_skill function. Lazily import it so a missing/optional
+# dependency never crashes the main JARVIS assistant.
+try:
+    from fastmcp import FastMCP
+    mcp = FastMCP("Jarvis-Skill-Factory")
+except Exception:  # pragma: no cover
+    FastMCP = None  # type: ignore[assignment]
+    mcp = None  # type: ignore[assignment]
 
 # ── Directories (relative to project root) ─────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent
@@ -42,10 +49,10 @@ def _sandbox_python() -> str:
         return str(SANDBOX_VENV / "Scripts" / "python.exe")
     return str(SANDBOX_VENV / "bin" / "python")
 
+
 # ── Tool ───────────────────────────────────────────────────────────────
 
-@mcp.tool()
-def test_and_deploy_skill(
+def test_and_deploy_skill_impl(
     skill_name: str,
     python_code: str,
     required_pip_packages: list[str] | None = None,
@@ -168,9 +175,20 @@ def test_and_deploy_skill(
     )
 
 
+# Expose test_and_deploy_skill as the callable used by main.py. If fastmcp
+# is available (standalone server mode), also register it as an MCP tool.
+_mcp_tool = getattr(mcp, "tool", None)
+if _mcp_tool is not None:
+    test_and_deploy_skill = _mcp_tool()(test_and_deploy_skill_impl)
+else:
+    test_and_deploy_skill = test_and_deploy_skill_impl
+
+
 # ── Entry point ───────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     """Run the MCP server when executed directly."""
-    mcp.run(transport="stdio")
-
+    if mcp is not None:
+        mcp.run(transport="stdio")
+    else:
+        print("fastmcp not installed - cannot run as MCP server.")
