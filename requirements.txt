@@ -1,0 +1,15 @@
+# JARVIS Windows v2.1 — Required packages
+google-genai  # Gemini Live API
+SpeechRecognition
+pyaudio       # Microphone input & audio output
+psutil        # System monitoring (CPU, RAM, disk)
+Pillow        # Image handling for UI icons
+requests      # HTTP calls (weather, MCP, etc.)
+pyautogui     # GUI automation (media, WhatsApp)
+pyttsx3       # Text-to-speech
+pywin32; platform_system == "Windows"  # Windows COM / win32 API
+fastmcp       # MCP server framework for Skill Factory
+mcp>=1.0.0    # Model Context Protocol client
+httpx         # Async HTTP client for MCPController
+# Yerel mod (LM Studio) ek bagimliliklar — whisper STT icin opsiyonel
+openai-whisper; python_version >= "3.9"
